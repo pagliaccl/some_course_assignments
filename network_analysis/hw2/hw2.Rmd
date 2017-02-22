@@ -1,0 +1,50 @@
+---
+title: "hw2"
+author: "Linxiao Bai"
+date: "11/1/2016"
+output: word_document
+---
+#This function print out varities of centralities
+```{r}
+library(igraph)
+question=function(a){
+  g=read_graph(a, format ="graphml" )
+  print ("Degree centrality is =====>")
+  print(degree(g))
+  print ("Closeness centrality is =====>")
+  print (closeness(g))
+  print ("Betweenness centrality is =====>")
+  print (betweenness(g))
+  print ("PageRank centrality is =====>")
+  print (page_rank(g,damping=0.9)$vector)
+  print ("Assortativity centrality is =====>")
+  print (assortativity_degree(g))
+  print ("local clustering coef is =====>")
+  print (transitivity(g,type = 'local'))
+  print ("global clustering coef is =====>")
+  print (transitivity(g,type = 'global'))
+
+  ws=c()
+  for(i in transitivity(g,type = 'local')){
+    if (is.nan(i)){
+      ws=c(ws,0)
+    }
+    else{
+      ws=c(ws,i)
+    }
+  }
+  print ("Watts-Strogatz global clustering coef is =====>")
+  print (mean(ws)/length(ws))
+}
+
+
+
+```
+#question 6
+```{r}
+question("/Users/Pagliacci/Desktop/PHY 525/hw2/initial_network.graphml")
+```
+#question 7
+```{r}
+question("/Users/Pagliacci/Downloads/final_network.graphml")
+```

@@ -1,0 +1,156 @@
+---
+title: "HW1"
+author: "Linxiao Bai"
+date: "2/13/2017"
+output:
+  html_document: default
+  word_document: default
+---
+###Question 3
+####Loading Library
+```{r results='hide', message=FALSE, warning=FALSE}
+library(MASS)
+```
+####a),b),c)
+```{r}
+par(new=FALSE)
+
+model1=lm(bwt~age,data=birthwt)
+model1$coefficients
+inf=influence.measures(model1)
+
+color=replicate(nrow(birthwt),"black")
+symb=replicate(nrow(birthwt),20)
+
+#iii
+color[which(data.frame(inf$is.inf)$hat==TRUE)]="red"
+par(new=TRUE)
+plot(birthwt$age,birthwt$bwt,pch=symb,col=color)
+#iv
+color=replicate(nrow(birthwt),"black")
+symb=replicate(nrow(birthwt),20)
+symb[which(data.frame(inf$is.inf)$dffit==TRUE)]=2
+color[which(data.frame(inf$is.inf)$dffit==TRUE)]="green"
+color[intersect(which(data.frame(inf$infmat)$dffit<0),which(data.frame(inf$is.inf)$dffit==TRUE))]="blue"
+par(new=TRUE)
+plot(birthwt$age,birthwt$bwt,pch=symb,col=color)
+#v
+color=replicate(nrow(birthwt),"black")
+symb=replicate(nrow(birthwt),20)
+symb[which(data.frame(inf$is.inf)$cov.r==TRUE)]=6
+color[which(data.frame(inf$is.inf)$cov.r==TRUE)]="green"
+color[intersect(which(data.frame(inf$is.inf)$cov.r==TRUE),which(data.frame(inf$infmat)$cov.r<1))]="blue"
+par(new=TRUE)
+plot(birthwt$age,birthwt$bwt,pch=symb,col=color)
+abline(model1,col="red")
+
+```
+####d)
+From the plot we see that triangles pointting up, color green and blue is saperated rougly by y value around 3000.
+
+####e)
+Triangles pointting down is dominant in the plot. All abnormal overvations are roughly caught by triangles pointing down that is covanriance ratio. However, the influence of selecting exclusively with covariance ratio will be discussed in question i)
+
+####f)
+According to the plot, age= 35 roughly seperate blue and green down-triangles. Also, equation 6.5 suggests that x value is dominant in the dertermine of covariance.
+
+####g)
+
+####h)
+
+
+####i)
+Based on the plot we obtained, although covariance ratio identifier covers the result of most of the outlier indicators. However, selecting the covariance indicator will result the selection of all other indicators, which is not necessarily a good result because the other indicator may causes error and other bad influnences on the training of model.
+
+###Question 4
+####a), b), c)
+```{r}
+birthwt=birthwt[data.frame(inf$is.inf)$dffit==FALSE,]
+fml.list=list(
+  bwt~age,
+  bwt~smoke,
+  bwt~smoke+age,
+  bwt~smoke+smoke:age,
+  bwt~smoke+I(1-smoke):age,
+  bwt~smoke+age+smoke:age
+)
+
+getCol1=function(i){
+  return(lm(i,data=birthwt[which(birthwt$smoke==0),])$coefficient["(Intercept)"])
+}
+
+getCol2=function(i){
+  return(lm(i,data=birthwt[which(birthwt$smoke==0),])$coefficient["age"])
+}
+
+getCol3=function(i){
+  return(lm(i,data=birthwt[which(birthwt$smoke==1),])$coefficient["(Intercept)"])
+}
+
+getCol4=function(i){
+  return(lm(i,data=birthwt[which(birthwt$smoke==1),])$coefficient["age"])
+}
+
+getCol5=function(i){
+  return(summary(lm(i,data=birthwt))$adj.r.squared)
+}
+
+getCol6=function(i){
+  return(summary(lm(i,data=birthwt))$fstatistic[1])
+}
+
+getCol7=function(i){
+  return(summary(lm(i,data=birthwt))$f[2])
+}
+
+getCol8=function(i){
+  return(summary(lm(i,data=birthwt))$f[3])
+}
+
+getCol9=function(i){
+  fstat=summary(lm(i,data=birthwt))$fstatistic[1]
+  df1=summary(lm(i,data=birthwt))$f[2]
+  df2=summary(lm(i,data=birthwt))$f[3]
+  return(pf(fstat,df1,df2,lower.tail = FALSE))
+}
+
+table=data.frame(matrix(NA,ncol=9,nrow=6))
+
+colnames(table)=1:9
+for(i in 1:9){
+  table[,toString(i)]=unlist(lapply(fml.list,paste("getCol",i,sep = "")))
+}
+
+table[is.na(table)]=0
+table
+
+par(new=FALSE)
+par(mfrow=c(2,3))
+for(i in 1:6){
+  plot(birthwt$age,birthwt$bwt,xlab="age",ylab="bwt",main=Reduce(paste, deparse(fml.list[[i]])))
+  mdl=lm(fml.list[[i]],data=birthwt)
+  a=mdl$coefficient["(Intercept)"]
+  b=ifelse(is.na(mdl$coefficient["age"]),0,mdl$coefficient["age"])
+  abline(a,b,col="red")
+}
+```
+####d) 
+```{r}
+lmsmoke=lm(bwt~age,data=birthwt[which(birthwt$smoke==1),])
+paste("bwt=",coef(lmsmoke)[1],coef(lmsmoke)[2],"*age")
+lmNsmoke=lm(bwt~age,data=birthwt[which(birthwt$smoke==0),])
+paste("bwt=",coef(lmNsmoke)[1],"+",coef(lmNsmoke)[2],"*age")
+
+```
+Model 5 has the highest adjR, the relationship is shown above
+
+####e)
+```{r}
+md6=lm(fml.list[[5]],data=birthwt)
+md1=lm(fml.list[[1]],data=birthwt)
+md2=lm(fml.list[[2]],data=birthwt)
+
+anova(md1,md6,test="F")
+anova(md2,md6,test="F")
+```
+The result shows that model 1,2 as the submodel of model 5 gives different f statistics compare to model6. Where p value of model1 against model6 is lower than model2 agains model6. Which means model2 is more similar to model 6 than model1. This result agrees with the adjR ranking where model5 is the highest, and model 2 then model1
