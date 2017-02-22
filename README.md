@@ -1,1 +1,1 @@
-# some_course_assignments
+This is the repository for example course assignments. All rights reserved
